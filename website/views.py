@@ -1,7 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 
 from django.contrib import auth
+from django.contrib.auth.models import User
+from .models import Chat
+
+from django.utils import timezone
 
 import openai
 import os
@@ -42,20 +46,35 @@ def generate_response(message):
         except Exception as err:
             print(err)
             time.sleep(0.1)
-    answer = response.choices[0].message['content']
+    answer = response.choices[0].message['content'].strip()
     return answer
 
 # Create your views here.
 
 def chatbot(request):
+    chats = Chat.objects.filter(user = request.user)
     if request.method == 'POST':
         message = request.POST.get('message')
         response = generate_response(message)
+
+        chat = Chat(user = request.user, message = message, response = response, created_at = timezone.now())
+        chat.save() # save chat
         return JsonResponse({'message' : message, 'response' : response})
-    return render(request, 'chatbot.html')
+    return render(request, 'chatbot.html', {'chats' : chats})
 
 def login(request):
-    return render(request, 'login.html')
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = auth.authenticate(request, username = username, password = password) # check user exist
+        if user is not None:
+            auth.login(request, user)
+            return redirect('chatbot')
+        else:
+            error_message = 'Invalid username or password'
+            return render(request, 'login.html', {'error_message': error_message})
+    else:
+        return render(request, 'login.html')
 
 def register(request):
     if request.method == 'POST':
@@ -66,9 +85,13 @@ def register(request):
 
         if password1 == password2:
             try:
-                user 
+                user = User.objects.create_user(username, email, password1)
+                user.save()
+                auth.login(request, user)
+                return redirect('chatbot')
             except:
-
+                error_message = 'Error creating account'
+                return render(request, 'register.html', {'error_message' : error_message})
         else:
             error_message = 'Password not match !'
             return render(request, 'register.html', {'error_message': error_message})
@@ -76,4 +99,6 @@ def register(request):
     return render(request, 'register.html')
 
 def logout(request):
-    return render(request, 'logout.html')
+    auth.logout(request)
+
+    return redirect('login')
