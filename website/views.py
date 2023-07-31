@@ -1,5 +1,8 @@
 from django.shortcuts import render
 from django.http import JsonResponse
+
+from django.contrib import auth
+
 import openai
 import os
 import time
@@ -50,3 +53,27 @@ def chatbot(request):
         response = generate_response(message)
         return JsonResponse({'message' : message, 'response' : response})
     return render(request, 'chatbot.html')
+
+def login(request):
+    return render(request, 'login.html')
+
+def register(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        email = request.POST['email']
+        password1 = request.POST['password1']
+        password2 = request.POST['password2']
+
+        if password1 == password2:
+            try:
+                user 
+            except:
+
+        else:
+            error_message = 'Password not match !'
+            return render(request, 'register.html', {'error_message': error_message})
+
+    return render(request, 'register.html')
+
+def logout(request):
+    return render(request, 'logout.html')
