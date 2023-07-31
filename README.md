@@ -8,4 +8,4 @@ OPENAI_API = "sk-a...."
 ```
 
 ### Notice ###
-May have problem when running docker server!
+Remeber to check your port when running Docker server !
